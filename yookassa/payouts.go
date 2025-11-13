@@ -1,6 +1,7 @@
 package yookassa
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 
@@ -29,11 +30,12 @@ func (p PayoutHandler) WithIdempotencyKey(idempotencyKey string) *PayoutHandler 
 	return &p
 }
 
-func (p *PayoutHandler) GetSbpBanks() ([]yoopayout.SbpBank, error) {
-	resp, err := p.client.makeRequest("GET", SbpBanksEndpoint, nil, nil, p.idempotencyKey)
+func (p *PayoutHandler) GetSbpBanksCtx(ctx context.Context) ([]yoopayout.SbpBank, error) {
+	resp, err := p.client.makeRequest(ctx, "GET", SbpBanksEndpoint, nil, nil, p.idempotencyKey)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		var respError error
@@ -54,8 +56,13 @@ func (p *PayoutHandler) GetSbpBanks() ([]yoopayout.SbpBank, error) {
 	return sbpBanks.Items, nil
 }
 
+// Deprecated: Use GetSbpBanksCtx instead.
+func (p *PayoutHandler) GetSbpBanks() ([]yoopayout.SbpBank, error) {
+	return p.GetSbpBanksCtx(context.Background())
+}
+
 // TODO: support other payout types
-func (p *PayoutHandler) CreatePayout(payout *yoopayout.Payout) (*yoopayout.Payout, error) {
+func (p *PayoutHandler) CreatePayoutCtx(ctx context.Context, payout *yoopayout.Payout) (*yoopayout.Payout, error) {
 	if payout.PayoutDestinationData.Type != yoopayout.PayoutTypeSBP {
 		return nil, errors.New("unsupported payout type")
 	}
@@ -65,10 +72,11 @@ func (p *PayoutHandler) CreatePayout(payout *yoopayout.Payout) (*yoopayout.Payou
 		return nil, err
 	}
 
-	resp, err := p.client.makeRequest("POST", PayoutsEndpoint, payoutJson, nil, p.idempotencyKey)
+	resp, err := p.client.makeRequest(ctx, "POST", PayoutsEndpoint, payoutJson, nil, p.idempotencyKey)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		var respError error
@@ -89,12 +97,18 @@ func (p *PayoutHandler) CreatePayout(payout *yoopayout.Payout) (*yoopayout.Payou
 	return &createdPayout, nil
 }
 
-func (p *PayoutHandler) GetPayout(payoutId string) (*yoopayout.Payout, error) {
+// Deprecated: Use CreatePayoutCtx instead.
+func (p *PayoutHandler) CreatePayout(payout *yoopayout.Payout) (*yoopayout.Payout, error) {
+	return p.CreatePayoutCtx(context.Background(), payout)
+}
+
+func (p *PayoutHandler) GetPayoutCtx(ctx context.Context, payoutId string) (*yoopayout.Payout, error) {
 	endpoint := PayoutsEndpoint + "/" + payoutId
-	resp, err := p.client.makeRequest("GET", endpoint, nil, nil, p.idempotencyKey)
+	resp, err := p.client.makeRequest(ctx, "GET", endpoint, nil, nil, p.idempotencyKey)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		var respError error
@@ -113,4 +127,9 @@ func (p *PayoutHandler) GetPayout(payoutId string) (*yoopayout.Payout, error) {
 	}
 
 	return &payout, nil
+}
+
+// Deprecated: Use GetPayoutCtx instead.
+func (p *PayoutHandler) GetPayout(payoutId string) (*yoopayout.Payout, error) {
+	return p.GetPayoutCtx(context.Background(), payoutId)
 }

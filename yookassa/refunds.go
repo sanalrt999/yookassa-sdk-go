@@ -2,6 +2,7 @@
 package yookassa
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -31,14 +32,15 @@ func (r RefundHandler) WithIdempotencyKey(idempotencyKey string) RefundHandler {
 	return r
 }
 
-// CreateRefund creates a refund, accepts and returns the Refund entity.
-func (r *RefundHandler) CreateRefund(refund *yoorefund.Refund) (*yoorefund.Refund, error) {
+// CreateRefundCtx creates a refund, accepts and returns the Refund entity.
+func (r *RefundHandler) CreateRefundCtx(ctx context.Context, refund *yoorefund.Refund) (*yoorefund.Refund, error) {
 	refundJson, err := json.Marshal(refund)
 	if err != nil {
 		return nil, err
 	}
 
 	resp, err := r.client.makeRequest(
+		ctx,
 		http.MethodPost,
 		RefundEndpoint,
 		refundJson,
@@ -48,6 +50,7 @@ func (r *RefundHandler) CreateRefund(refund *yoorefund.Refund) (*yoorefund.Refun
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		var respError error
@@ -64,37 +67,51 @@ func (r *RefundHandler) CreateRefund(refund *yoorefund.Refund) (*yoorefund.Refun
 		return nil, err
 	}
 
+	return refundResponse, nil
+}
+
+// CreateRefund creates a refund, accepts and returns the Refund entity.
+// Deprecated: Use CreateRefundCtx instead.
+func (r *RefundHandler) CreateRefund(refund *yoorefund.Refund) (*yoorefund.Refund, error) {
+	return r.CreateRefundCtx(context.Background(), refund)
+}
+
+// FindRefundCtx find a refund by ID returns the Refund entity.
+func (r *RefundHandler) FindRefundCtx(ctx context.Context, id string) (*yoorefund.Refund, error) {
+	endpoint := fmt.Sprintf("%s/%s", RefundEndpoint, id)
+
+	resp, err := r.client.makeRequest(ctx, http.MethodGet, endpoint, nil, nil, r.idempotencyKey)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var respError error
+		respError, err = yooerror.GetError(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, respError
+	}
+
+	refundResponse, err := r.parseRefundResponse(resp)
+	if err != nil {
+		return nil, err
+	}
 	return refundResponse, nil
 }
 
 // FindRefund find a refund by ID returns the Refund entity.
+// Deprecated: Use FindRefundCtx instead.
 func (r *RefundHandler) FindRefund(id string) (*yoorefund.Refund, error) {
-	endpoint := fmt.Sprintf("%s/%s", RefundEndpoint, id)
-
-	resp, err := r.client.makeRequest(http.MethodGet, endpoint, nil, nil, r.idempotencyKey)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		var respError error
-		respError, err = yooerror.GetError(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		return nil, respError
-	}
-
-	refundResponse, err := r.parseRefundResponse(resp)
-	if err != nil {
-		return nil, err
-	}
-	return refundResponse, nil
+	return r.FindRefundCtx(context.Background(), id)
 }
 
-// FindRefunds find refunds by filter and returns the list of refunds.
-func (r *RefundHandler) FindRefunds(
+// FindRefundsCtx find refunds by filter and returns the list of refunds.
+func (r *RefundHandler) FindRefundsCtx(
+	ctx context.Context,
 	filter *yoorefund.RefundListFilter,
 ) (*yoorefund.RefundList, error) {
 	filterJson, err := json.Marshal(filter)
@@ -109,6 +126,7 @@ func (r *RefundHandler) FindRefunds(
 	}
 
 	resp, err := r.client.makeRequest(
+		ctx,
 		http.MethodGet,
 		RefundEndpoint,
 		nil,
@@ -118,6 +136,7 @@ func (r *RefundHandler) FindRefunds(
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		var respError error
@@ -141,6 +160,14 @@ func (r *RefundHandler) FindRefunds(
 		return nil, err
 	}
 	return &refundsResponse, nil
+}
+
+// FindRefunds find refunds by filter and returns the list of refunds.
+// Deprecated: Use FindRefundsCtx instead.
+func (r *RefundHandler) FindRefunds(
+	filter *yoorefund.RefundListFilter,
+) (*yoorefund.RefundList, error) {
+	return r.FindRefundsCtx(context.Background(), filter)
 }
 
 func (r *RefundHandler) parseRefundResponse(resp *http.Response) (*yoorefund.Refund, error) {

@@ -3,6 +3,7 @@ package yookassa
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/http"
 
@@ -29,6 +30,7 @@ func NewClient(accountId string, secretKey string) *Client {
 }
 
 func (c *Client) makeRequest(
+	ctx context.Context,
 	method string,
 	endpoint string,
 	body []byte,
@@ -37,7 +39,7 @@ func (c *Client) makeRequest(
 ) (*http.Response, error) {
 	uri := fmt.Sprintf("%s%s", BaseURL, endpoint)
 
-	req, err := http.NewRequest(method, uri, bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, method, uri, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}

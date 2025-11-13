@@ -2,6 +2,7 @@
 package yookassa
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -30,17 +31,18 @@ func (r SettingsHandler) WithIdempotencyKey(idempotencyKey string) SettingsHandl
 	return r
 }
 
-// GetAccountSettings gets the client account settings.
-func (s *SettingsHandler) GetAccountSettings(OnBehalfOf *string) (*yoosettings.Settings, error) {
+// GetAccountSettingsCtx gets the client account settings.
+func (s *SettingsHandler) GetAccountSettingsCtx(ctx context.Context, OnBehalfOf *string) (*yoosettings.Settings, error) {
 	var params map[string]interface{}
 	if OnBehalfOf != nil {
 		params = map[string]interface{}{"on_behalf_of": *OnBehalfOf}
 	}
 
-	resp, err := s.client.makeRequest(http.MethodGet, MeEndpoint, nil, params, s.idempotencyKey)
+	resp, err := s.client.makeRequest(ctx, http.MethodGet, MeEndpoint, nil, params, s.idempotencyKey)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		var respError error
@@ -57,6 +59,12 @@ func (s *SettingsHandler) GetAccountSettings(OnBehalfOf *string) (*yoosettings.S
 		return nil, err
 	}
 	return settingsResponse, nil
+}
+
+// GetAccountSettings gets the client account settings.
+// Deprecated: Use GetAccountSettingsCtx instead.
+func (s *SettingsHandler) GetAccountSettings(OnBehalfOf *string) (*yoosettings.Settings, error) {
+	return s.GetAccountSettingsCtx(context.Background(), OnBehalfOf)
 }
 
 func (s *SettingsHandler) parseSettingsResponse(
