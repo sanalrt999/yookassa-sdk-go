@@ -4,7 +4,7 @@ package yoopayment
 import (
 	"time"
 
-	yoocommon "github.com/rvinnie/yookassa-sdk-go/yookassa/common"
+	yoocommon "github.com/sanalrt999/yookassa-sdk-go/yookassa/common"
 )
 
 // The Payment object contains all currently relevant information

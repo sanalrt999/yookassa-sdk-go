@@ -1,4 +1,4 @@
-module github.com/rvinnie/yookassa-sdk-go
+module github.com/sanalrt999/yookassa-sdk-go
 
 go 1.19
 

@@ -7,8 +7,8 @@ import (
 	"io"
 	"net/http"
 
-	yooerror "github.com/rvinnie/yookassa-sdk-go/yookassa/errors"
-	yoosettings "github.com/rvinnie/yookassa-sdk-go/yookassa/settings"
+	yooerror "github.com/sanalrt999/yookassa-sdk-go/yookassa/errors"
+	yoosettings "github.com/sanalrt999/yookassa-sdk-go/yookassa/settings"
 )
 
 const (

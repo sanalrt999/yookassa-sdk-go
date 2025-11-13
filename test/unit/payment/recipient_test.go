@@ -2,7 +2,7 @@ package payment
 
 import (
 	"encoding/json"
-	yoopayment "github.com/rvinnie/yookassa-sdk-go/yookassa/payment"
+	yoopayment "github.com/sanalrt999/yookassa-sdk-go/yookassa/payment"
 	"reflect"
 	"testing"
 )
