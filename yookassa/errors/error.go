@@ -15,7 +15,14 @@ type YoomoneyError struct {
 }
 
 func (y *YoomoneyError) Error() string {
-	return fmt.Sprintf("%s: %s", y.Type, y.Description)
+	msg := fmt.Sprintf("%s: %s", y.Type, y.Description)
+	if y.Code != "" {
+		msg += fmt.Sprintf(" (code: %s)", y.Code)
+	}
+	if y.Parameter != "" {
+		msg += fmt.Sprintf(" (parameter: %s)", y.Parameter)
+	}
+	return msg
 }
 
 func GetError(r io.Reader) (*YoomoneyError, error) {
