@@ -13,7 +13,17 @@
 import "github.com/sanalrt999/yookassa-sdk-go/yookassa"
 
 func main() {
-    client := yookassa.NewClient('<Идентификатор магазина>', '<Секретный ключ>')	
+    client := yookassa.NewClient('<Идентификатор магазина>', '<Секретный ключ>')
+}
+```
+
+Также можно авторизоваться с помощью OAuth-токена:
+
+```go
+import "github.com/sanalrt999/yookassa-sdk-go/yookassa"
+
+func main() {
+    client := yookassa.NewClientWithToken('<OAuth-токен>')
 }
 ```
 

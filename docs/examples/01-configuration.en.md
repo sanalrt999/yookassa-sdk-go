@@ -13,7 +13,17 @@ To work with the API, you need to create a client, specifying the store ID and s
 import "github.com/sanalrt999/yookassa-sdk-go/yookassa"
 
 func main() {
-    client := yookassa.NewClient('<Store ID>', '<Secret key>')	
+    client := yookassa.NewClient('<Store ID>', '<Secret key>')
+}
+```
+
+You can also authenticate using an OAuth token:
+
+```go
+import "github.com/sanalrt999/yookassa-sdk-go/yookassa"
+
+func main() {
+    client := yookassa.NewClientWithToken('<OAuth token>')
 }
 ```
 

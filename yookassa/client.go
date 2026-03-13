@@ -14,18 +14,47 @@ const (
 	BaseURL = "https://api.yookassa.ru/v3/"
 )
 
+// Authorizer sets authorization headers on HTTP requests.
+type Authorizer interface {
+	Authorize(req *http.Request)
+}
+
+// BasicAuth implements Authorizer using HTTP Basic Authentication.
+type BasicAuth struct {
+	AccountID string
+	SecretKey string
+}
+
+func (a BasicAuth) Authorize(req *http.Request) {
+	req.SetBasicAuth(a.AccountID, a.SecretKey)
+}
+
+// BearerTokenAuth implements Authorizer using Bearer Token authentication.
+type BearerTokenAuth struct {
+	Token string
+}
+
+func (a BearerTokenAuth) Authorize(req *http.Request) {
+	req.Header.Set("Authorization", "Bearer "+a.Token)
+}
+
 // Client works with YooMoney API.
 type Client struct {
-	client    http.Client
-	accountId string
-	secretKey string
+	client http.Client
+	auth   Authorizer
 }
 
 func NewClient(accountId string, secretKey string) *Client {
 	return &Client{
-		client:    http.Client{},
-		accountId: accountId,
-		secretKey: secretKey,
+		client: http.Client{},
+		auth:   BasicAuth{AccountID: accountId, SecretKey: secretKey},
+	}
+}
+
+func NewClientWithToken(token string) *Client {
+	return &Client{
+		client: http.Client{},
+		auth:   BearerTokenAuth{Token: token},
 	}
 }
 
@@ -53,7 +82,7 @@ func (c *Client) makeRequest(
 		req.Header.Set("Idempotence-Key", idempotencyKey)
 	}
 
-	req.SetBasicAuth(c.accountId, c.secretKey)
+	c.auth.Authorize(req)
 
 	if params != nil {
 		q := req.URL.Query()
